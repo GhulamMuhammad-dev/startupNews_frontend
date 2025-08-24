@@ -1,19 +1,26 @@
 "use client";
 import { useEffect, useState } from "react";
 import BlogCard from "@/components/BlogCard";
-import { 
-  Zap, 
-  RefreshCw, 
-  TrendingUp, 
+import {
+  RefreshCw,
+  TrendingUp,
   Activity,
-  Sparkles,
   ChevronRight,
   Globe,
   Clock
 } from "lucide-react";
 
+// ✅ Define the Blog type
+type Blog = {
+  slug: string;
+  title: string;
+  description: string;
+  imageUrl?: string;
+  createdAt?: string;
+};
+
 export default function Home() {
-  const [blogs, setBlogs] = useState<any[]>([]);
+  const [blogs, setBlogs] = useState<Blog[]>([]);
   const [progress, setProgress] = useState<string[]>([]);
   const [isScraping, setIsScraping] = useState(false);
   const [currentTime, setCurrentTime] = useState<string>("");
@@ -32,10 +39,8 @@ export default function Home() {
 
   useEffect(() => {
     fetchBlogs();
-    // Set initial time on client-side only
     setCurrentTime(new Date().toLocaleTimeString());
-    
-    // Update time every minute
+
     const timer = setInterval(() => {
       setCurrentTime(new Date().toLocaleTimeString());
     }, 60000);
@@ -48,20 +53,23 @@ export default function Home() {
     setIsScraping(true);
     const es = new EventSource(`${API_BASE}/api/v1/scrape/stream`);
 
-    es.onmessage = (e) => {
-      try {
-        const d = JSON.parse(e.data);
-        if (d.step) setProgress((p) => [...p, d.step]);
+ es.onmessage = (e) => {
+  try {
+    const d = JSON.parse(e.data) as { step?: string };
 
-        if (d.step && d.step.toLowerCase().includes("done")) {
-          es.close();
-          setIsScraping(false);
-          fetchBlogs();
-        }
-      } catch (_) {
-        setProgress((p) => [...p, e.data]);
+    if (typeof d.step === "string") {
+      setProgress((p) => [...p, d.step].filter(Boolean) as string[]);
+      if (d.step.toLowerCase().includes("done")) {
+        es.close();
+        setIsScraping(false);
+        fetchBlogs();
       }
-    };
+    }
+  } catch (_) {
+    setProgress((p) => [...p, String(e.data)]);
+  }
+};
+
 
     es.onerror = () => {
       es.close();
@@ -72,32 +80,38 @@ export default function Home() {
   return (
     <main className="min-h-screen bg-white">
       {/* Hero Header */}
-      <div className="relative overflow-hidden">
-        <div className="bg-gradient-to-r from-gray-900 via-black to-gray-900 relative">
+      <div className="relative overflow-hidden h-screen">
+        <div className="bg-gradient-to-r from-gray-900 via-black to-gray-900 relative h-screen flex items-center">
           {/* Background Pattern */}
           <div className="absolute inset-0 opacity-10">
-            <div className="absolute inset-0" style={{
-              backgroundImage: 'repeating-linear-gradient(45deg, transparent, transparent 20px, rgba(255,255,255,.1) 20px, rgba(255,255,255,.1) 40px)',
-            }}></div>
+            <div
+              className="absolute inset-0"
+              style={{
+                backgroundImage:
+                  "repeating-linear-gradient(45deg, transparent, transparent 20px, rgba(255,255,255,.1) 20px, rgba(255,255,255,.1) 40px)"
+              }}
+            ></div>
           </div>
 
-          <div className="relative max-w-7xl mx-auto px-6 py-16">
+          <div className="relative max-w-7xl mx-auto px-6 py-16 ">
             <div className="text-center text-white mb-12">
               <div className="flex justify-center items-center gap-2 mb-4">
-                <div className="w-8 h-8 bg-gradient-to-r from-orange-400 to-red-500 rounded-full flex items-center justify-center">
-                  <Sparkles className="w-4 h-4 text-white" />
-                </div>
+                <div className="w-8 h-8 bg-gradient-to-r from-orange-400 to-red-500 rounded-full flex items-center justify-center animate-ping"></div>
                 <span className="text-orange-400 font-bold text-sm tracking-wider uppercase">
                   AI-Powered Intelligence
                 </span>
               </div>
-              
+
               <h1 className="text-5xl md:text-6xl lg:text-7xl font-black leading-tight mb-6">
-                🚀 Startup <span className="bg-gradient-to-r from-orange-400 to-red-500 bg-clip-text text-transparent">Insights</span>
+                Startup{" "}
+                <span className="bg-gradient-to-r from-orange-400 to-red-500 bg-clip-text text-transparent">
+                  Insights
+                </span>
               </h1>
-              
+
               <p className="text-xl md:text-2xl opacity-90 leading-relaxed max-w-3xl mx-auto font-light mb-8">
-                Curated news, deep dives & tips for founders — generated daily by AI.
+                Curated news, deep dives & tips for founders generated daily by
+                AI.
               </p>
 
               {/* Action Buttons */}
@@ -113,10 +127,7 @@ export default function Home() {
                       <span>Scraping...</span>
                     </>
                   ) : (
-                    <>
-                      <Zap className="w-5 h-5 group-hover:rotate-12 transition-transform" />
-                      <span>Generate 10 Posts</span>
-                    </>
+                    <span>Generate 10 Posts</span>
                   )}
                 </button>
 
@@ -127,22 +138,6 @@ export default function Home() {
                   <RefreshCw className="w-5 h-5 group-hover:rotate-180 transition-transform duration-500" />
                   <span>Refresh</span>
                 </button>
-              </div>
-            </div>
-
-            {/* Stats */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto">
-              <div className="text-center p-6 bg-white/10 rounded-2xl backdrop-blur-sm border border-white/20">
-                <div className="text-3xl font-black text-orange-400 mb-2">{blogs.length}</div>
-                <div className="text-white/80 font-medium">Articles Generated</div>
-              </div>
-              <div className="text-center p-6 bg-white/10 rounded-2xl backdrop-blur-sm border border-white/20">
-                <div className="text-3xl font-black text-orange-400 mb-2">24/7</div>
-                <div className="text-white/80 font-medium">AI Monitoring</div>
-              </div>
-              <div className="text-center p-6 bg-white/10 rounded-2xl backdrop-blur-sm border border-white/20">
-                <div className="text-3xl font-black text-orange-400 mb-2">100+</div>
-                <div className="text-white/80 font-medium">Sources Tracked</div>
               </div>
             </div>
           </div>
@@ -161,15 +156,22 @@ export default function Home() {
                   </div>
                   <h4 className="text-xl font-bold">Pipeline Progress</h4>
                 </div>
-                <p className="text-white/90 text-sm">Real-time updates from our content generation system</p>
+                <p className="text-white/90 text-sm">
+                  Real-time updates from our content generation system
+                </p>
               </div>
-              
+
               <div className="p-6">
                 <div className="max-h-40 overflow-y-auto space-y-2">
                   {progress.map((p, i) => (
-                    <div key={i} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                    <div
+                      key={i}
+                      className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg"
+                    >
                       <div className="w-2 h-2 bg-gradient-to-r from-green-400 to-emerald-500 rounded-full animate-pulse"></div>
-                      <span className="text-gray-700 text-sm font-medium">{p}</span>
+                      <span className="text-gray-700 text-sm font-medium">
+                        {p}
+                      </span>
                     </div>
                   ))}
                 </div>
@@ -181,10 +183,14 @@ export default function Home() {
         {/* Content Header */}
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h2 className="text-3xl font-black text-gray-900 mb-2">Latest Insights</h2>
-            <p className="text-gray-600">Fresh perspectives and actionable advice for startup founders</p>
+            <h2 className="text-3xl font-black text-gray-900 mb-2">
+              Latest Insights
+            </h2>
+            <p className="text-gray-600">
+              Fresh perspectives and actionable advice for startup founders
+            </p>
           </div>
-          
+
           <div className="hidden sm:flex items-center gap-2 text-sm text-gray-500">
             <Clock className="w-4 h-4" />
             <span>Updated {currentTime || "recently"}</span>
@@ -194,12 +200,10 @@ export default function Home() {
         {/* Blog Cards Grid */}
         {blogs.length > 0 ? (
           <section className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
-            {blogs.map((blog: any, index: number) => (
+            {blogs.map((blog, index) => (
               <div
                 key={blog.slug}
-                style={{
-                  animationDelay: `${index * 100}ms`
-                }}
+                style={{ animationDelay: `${index * 100}ms` }}
                 className="animate-fade-in-up"
               >
                 <BlogCard blog={blog} />
@@ -211,15 +215,17 @@ export default function Home() {
             <div className="w-24 h-24 mx-auto mb-6 bg-gradient-to-br from-orange-400 to-red-500 rounded-3xl flex items-center justify-center">
               <Globe className="w-12 h-12 text-white" />
             </div>
-            <h3 className="text-2xl font-bold text-gray-800 mb-2">No Articles Yet</h3>
+            <h3 className="text-2xl font-bold text-gray-800 mb-2">
+              No Articles Yet
+            </h3>
             <p className="text-gray-600 mb-8 max-w-md mx-auto">
-              Generate your first batch of AI-powered startup insights and stay ahead of the curve!
+              Generate your first batch of AI-powered startup insights and stay
+              ahead of the curve!
             </p>
             <button
               onClick={startScraping}
               className="inline-flex items-center gap-2 bg-gradient-to-r from-orange-500 to-red-600 text-white px-8 py-4 rounded-full font-bold hover:from-orange-600 hover:to-red-700 transition-all duration-200 hover:shadow-lg hover:scale-105"
             >
-              <Zap className="w-5 h-5" />
               Get Started
               <ChevronRight className="w-4 h-4" />
             </button>
@@ -229,8 +235,13 @@ export default function Home() {
             <div className="w-24 h-24 mx-auto mb-6 bg-gradient-to-br from-blue-400 to-purple-500 rounded-3xl flex items-center justify-center">
               <Activity className="w-12 h-12 text-white animate-pulse" />
             </div>
-            <h3 className="text-2xl font-bold text-gray-800 mb-2">Generating Content...</h3>
-            <p className="text-gray-600">Our AI is working hard to curate the latest startup insights for you.</p>
+            <h3 className="text-2xl font-bold text-gray-800 mb-2">
+              Generating Content...
+            </h3>
+            <p className="text-gray-600">
+              Our AI is working hard to curate the latest startup insights for
+              you.
+            </p>
           </div>
         )}
       </div>

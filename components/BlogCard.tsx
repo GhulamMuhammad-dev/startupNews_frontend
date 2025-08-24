@@ -1,7 +1,7 @@
 "use client";
 import React from "react";
 import Link from "next/link";
-import { Calendar, Clock, TrendingUp, Star, Eye, MessageCircle, Zap } from "lucide-react";
+import { Clock, TrendingUp, Star, Eye, MessageCircle, Zap } from "lucide-react";
 
 interface Blog {
   id?: string | number;
@@ -51,11 +51,11 @@ export default function MagazineBlogCard({ blog, priority = false }: MagazineBlo
     return gradients[blog.category as keyof typeof gradients] || "from-orange-400 via-red-500 to-pink-500";
   };
 
-  const getImageFallback = () => {
-    const colors = ['from-blue-400 to-blue-600', 'from-green-400 to-green-600', 'from-purple-400 to-purple-600', 'from-red-400 to-red-600'];
-    const colorIndex = (blog.title?.length || 0) % colors.length;
-    return colors[colorIndex];
-  };
+  // const getImageFallback = () => {
+  //   const colors = ['from-blue-400 to-blue-600', 'from-green-400 to-green-600', 'from-purple-400 to-purple-600', 'from-red-400 to-red-600'];
+  //   const colorIndex = (blog.title?.length || 0) % colors.length;
+  //   return colors[colorIndex];
+  // };
 
   return (
     <div className="group perspective-1000">
@@ -135,7 +135,7 @@ export default function MagazineBlogCard({ blog, priority = false }: MagazineBlo
                 {/* Tags */}
                 {blog.tags && blog.tags.length > 0 && (
                   <div className="flex flex-wrap gap-2 mb-4">
-                    {blog.tags.slice(0, 3).map((tag, index) => (
+                    {blog.tags.slice(0, 3).map((tag) => (
                       <span
                         key={tag}
                         className="px-2 py-1 bg-black text-white text-xs font-bold rounded transform hover:scale-110 hover:bg-gray-800 transition-all cursor-pointer"
